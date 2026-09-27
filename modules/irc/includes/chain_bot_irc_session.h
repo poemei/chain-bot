@@ -39,6 +39,13 @@ int chain_bot_irc_session_privmsg(
     char *error,
     size_t error_size);
 
+int chain_bot_irc_session_privmsg_to(
+    chain_bot_irc_session_t *session,
+    const char *target,
+    const char *message,
+    char *error,
+    size_t error_size);
+
 int chain_bot_irc_session_quit(
     chain_bot_irc_session_t *session,
     const char *reason,
