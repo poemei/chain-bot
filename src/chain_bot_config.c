@@ -202,7 +202,8 @@ int chain_bot_config_load(const char *path,
         !parse_port(irc, "port", &config->irc.port) ||
         !parse_bool(irc, "tls", &config->irc.tls) ||
         !parse_string(irc, "channel", config->irc.channel, sizeof(config->irc.channel)) ||
-        !parse_string(irc, "nick", config->irc.nick, sizeof(config->irc.nick))) {
+        !parse_string(irc, "nick", config->irc.nick, sizeof(config->irc.nick)) ||
+        !parse_string(irc, "password", config->irc.password, sizeof(config->irc.password))) {
         free(json);
         set_error(error, error_size, "chain_bot.json is missing or contains an invalid setting");
         return 0;
@@ -211,7 +212,8 @@ int chain_bot_config_load(const char *path,
     free(json);
 
     if (config->chain.host[0] == '\0' || config->irc.host[0] == '\0' ||
-        config->irc.channel[0] != '#' || config->irc.nick[0] == '\0' || !config->irc.tls) {
+        config->irc.channel[0] != '#' || config->irc.nick[0] == '\0' ||
+        config->irc.password[0] == '\0' || !config->irc.tls) {
         set_error(error, error_size, "chain_bot.json contains an invalid configuration");
         return 0;
     }
