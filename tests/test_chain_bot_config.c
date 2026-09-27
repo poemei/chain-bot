@@ -28,7 +28,7 @@ static int test_valid_config(void)
         "{\n"
         "  \"chain\": {\"host\": \"127.0.0.1\", \"port\": 18473},\n"
         "  \"irc\": {\"host\": \"irc.libera.chat\", \"port\": 6697, \"tls\": true, "
-        "\"channel\": \"#STNC-Chain\", \"nick\": \"STNC-ChainBot\"}\n"
+        "\"channel\": \"#STNC-Chain\", \"nick\": \"chain-bot\", \"password\": \"test-only-password\"}\n"
         "}\n";
     chain_bot_config_t config;
     char error[256];
@@ -46,7 +46,8 @@ static int test_valid_config(void)
            strcmp(config.irc.host, "irc.libera.chat") == 0 &&
            config.irc.port == 6697U && config.irc.tls == 1 &&
            strcmp(config.irc.channel, "#STNC-Chain") == 0 &&
-           strcmp(config.irc.nick, "STNC-ChainBot") == 0;
+           strcmp(config.irc.nick, "chain-bot") == 0 &&
+           strcmp(config.irc.password, "test-only-password") == 0;
 }
 
 static int test_tls_required(void)
@@ -55,7 +56,27 @@ static int test_tls_required(void)
     const char *json =
         "{\"chain\":{\"host\":\"127.0.0.1\",\"port\":18473},"
         "\"irc\":{\"host\":\"irc.libera.chat\",\"port\":6697,\"tls\":false,"
-        "\"channel\":\"#STNC-Chain\",\"nick\":\"STNC-ChainBot\"}}";
+        "\"channel\":\"#STNC-Chain\",\"nick\":\"chain-bot\",\"password\":\"test-only-password\"}}";
+    chain_bot_config_t config;
+    char error[256];
+    int ok;
+
+    if (!write_fixture(path, json)) {
+        return 0;
+    }
+
+    ok = chain_bot_config_load(path, &config, error, sizeof(error));
+    (void)remove(path);
+    return !ok;
+}
+
+static int test_password_required(void)
+{
+    const char *path = "test_chain_bot_password.json";
+    const char *json =
+        "{\"chain\":{\"host\":\"127.0.0.1\",\"port\":18473},"
+        "\"irc\":{\"host\":\"irc.libera.chat\",\"port\":6697,\"tls\":true,"
+        "\"channel\":\"#STNC-Chain\",\"nick\":\"chain-bot\"}}";
     chain_bot_config_t config;
     char error[256];
     int ok;
@@ -100,6 +121,7 @@ int main(void)
 
     RUN_TEST(test_valid_config);
     RUN_TEST(test_tls_required);
+    RUN_TEST(test_password_required);
     RUN_TEST(test_missing_file);
     RUN_TEST(test_invalid_arguments);
 
