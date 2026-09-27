@@ -7,6 +7,7 @@
 #define CHAIN_BOT_CONFIG_HOST_MAX 256
 #define CHAIN_BOT_CONFIG_CHANNEL_MAX 128
 #define CHAIN_BOT_CONFIG_NICK_MAX 64
+#define CHAIN_BOT_CONFIG_PASSWORD_MAX 256
 
 typedef struct chain_bot_chain_config {
     char host[CHAIN_BOT_CONFIG_HOST_MAX];
@@ -19,6 +20,7 @@ typedef struct chain_bot_irc_config {
     int tls;
     char channel[CHAIN_BOT_CONFIG_CHANNEL_MAX];
     char nick[CHAIN_BOT_CONFIG_NICK_MAX];
+    char password[CHAIN_BOT_CONFIG_PASSWORD_MAX];
 } chain_bot_irc_config_t;
 
 typedef struct chain_bot_config {
