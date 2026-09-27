@@ -11,11 +11,13 @@ IRC_RUNTIME := modules/irc/src/chain_bot_irc_runtime.c
 IRC_LOOP := modules/irc/src/chain_bot_irc_loop.c
 IRC_WORKER := modules/irc/src/chain_bot_irc_worker.c
 IRC_MODULE := modules/irc/src/chain_bot_irc_module.c
+APP_SRC := src/chain_bot_app.c src/chain_bot_config.c $(IRC_WORKER) $(IRC_LOOP) $(IRC_RUNTIME) $(IRC_SESSION) $(IRC_TRANSPORT)
 
 TEST_BINS := \
  $(BUILD)/test_chain_bot \
  $(BUILD)/test_chain_bot_config \
  $(BUILD)/test_chain_bot_module \
+ $(BUILD)/test_chain_bot_app \
  $(BUILD)/test_chain_bot_irc_runtime \
  $(BUILD)/test_chain_bot_irc_transport \
  $(BUILD)/test_chain_bot_irc_session \
@@ -25,13 +27,16 @@ TEST_BINS := \
 
 .PHONY: all test clean check-abi
 
-all: test
+all: $(BUILD)/chain-bot test
 
 check-abi:
 	@test -f ../ABI/includes/abi.h || (echo "ERROR: sibling ../ABI repository is required"; exit 1)
 
 $(BUILD):
 	mkdir -p $(BUILD)
+
+$(BUILD)/chain-bot: src/main.c $(APP_SRC) | $(BUILD)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@ $(LDLIBS)
 
 $(BUILD)/test_chain_bot: tests/test_chain_bot.c src/chain_bot.c | $(BUILD)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@
@@ -40,6 +45,9 @@ $(BUILD)/test_chain_bot_config: tests/test_chain_bot_config.c src/chain_bot_conf
 	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@
 
 $(BUILD)/test_chain_bot_module: tests/test_chain_bot_module.c src/chain_bot_module.c $(ABI_SRC) | $(BUILD) check-abi
+	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@ $(LDLIBS)
+
+$(BUILD)/test_chain_bot_app: tests/test_chain_bot_app.c $(APP_SRC) | $(BUILD)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@ $(LDLIBS)
 
 $(BUILD)/test_chain_bot_irc_runtime: tests/test_chain_bot_irc_runtime.c $(IRC_RUNTIME) $(IRC_SESSION) $(IRC_TRANSPORT) | $(BUILD)
