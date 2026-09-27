@@ -2,8 +2,10 @@
 
 #include "chain_bot_irc_module.h"
 #include "chain_bot_irc_runtime.h"
+#include "chain_bot_irc_worker.h"
 
 static chain_bot_irc_runtime_t chain_bot_irc_runtime;
+static chain_bot_irc_worker_t chain_bot_irc_worker;
 static int chain_bot_irc_runtime_initialized = 0;
 
 static stnlabz_module_result_t chain_bot_irc_qualify(
@@ -69,7 +71,6 @@ static stnlabz_module_result_t chain_bot_irc_start(
     }
 
     config = (const chain_bot_irc_config_t *)host->context;
-
     chain_bot_irc_runtime_init(&chain_bot_irc_runtime);
 
     if (!chain_bot_irc_runtime_connect(
@@ -77,6 +78,12 @@ static stnlabz_module_result_t chain_bot_irc_start(
             config,
             error,
             sizeof(error))) {
+        chain_bot_irc_runtime_close(&chain_bot_irc_runtime);
+        return STNLABZ_MODULE_ERR_START_FAILED;
+    }
+
+    chain_bot_irc_worker_init(&chain_bot_irc_worker, &chain_bot_irc_runtime);
+    if (!chain_bot_irc_worker_start(&chain_bot_irc_worker)) {
         chain_bot_irc_runtime_close(&chain_bot_irc_runtime);
         return STNLABZ_MODULE_ERR_START_FAILED;
     }
@@ -91,6 +98,7 @@ static stnlabz_module_result_t chain_bot_irc_stop(void)
         return STNLABZ_MODULE_OK;
     }
 
+    chain_bot_irc_worker_stop(&chain_bot_irc_worker);
     chain_bot_irc_runtime_close(&chain_bot_irc_runtime);
     chain_bot_irc_runtime_initialized = 0;
 
