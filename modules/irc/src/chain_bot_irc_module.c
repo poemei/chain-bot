@@ -1,6 +1,10 @@
 #include <string.h>
 
 #include "chain_bot_irc_module.h"
+#include "chain_bot_irc_runtime.h"
+
+static chain_bot_irc_runtime_t chain_bot_irc_runtime;
+static int chain_bot_irc_runtime_initialized = 0;
 
 static stnlabz_module_result_t chain_bot_irc_qualify(
     stnlabz_module_qualification_result_t *result)
@@ -53,20 +57,43 @@ static stnlabz_module_result_t chain_bot_irc_qualify(
 static stnlabz_module_result_t chain_bot_irc_start(
     const stnlabz_module_host_t *host)
 {
-    if (host == NULL) {
+    const chain_bot_irc_config_t *config;
+    char error[256];
+
+    if (host == NULL || host->context == NULL) {
         return STNLABZ_MODULE_ERR_INVALID_ARGUMENT;
     }
 
-    /*
-     * Transport/session wiring is the next bounded IRC capability.
-     * Activation succeeds only after ABI qualification; no network
-     * connection is attempted by this descriptor-only pass.
-     */
+    if (chain_bot_irc_runtime_initialized) {
+        return STNLABZ_MODULE_ERR_INVALID_STATE;
+    }
+
+    config = (const chain_bot_irc_config_t *)host->context;
+
+    chain_bot_irc_runtime_init(&chain_bot_irc_runtime);
+
+    if (!chain_bot_irc_runtime_connect(
+            &chain_bot_irc_runtime,
+            config,
+            error,
+            sizeof(error))) {
+        chain_bot_irc_runtime_close(&chain_bot_irc_runtime);
+        return STNLABZ_MODULE_ERR_START_FAILED;
+    }
+
+    chain_bot_irc_runtime_initialized = 1;
     return STNLABZ_MODULE_OK;
 }
 
 static stnlabz_module_result_t chain_bot_irc_stop(void)
 {
+    if (!chain_bot_irc_runtime_initialized) {
+        return STNLABZ_MODULE_OK;
+    }
+
+    chain_bot_irc_runtime_close(&chain_bot_irc_runtime);
+    chain_bot_irc_runtime_initialized = 0;
+
     return STNLABZ_MODULE_OK;
 }
 
