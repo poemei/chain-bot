@@ -1,0 +1,30 @@
+[Unit]
+Description=STN Chain Bot
+Documentation=https://github.com/poemei/chain-bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=chain-bot
+Group=chain-bot
+WorkingDirectory=/opt/chain-bot
+ExecStart=/opt/chain-bot/chain-bot /opt/chain-bot/config/chain_bot.json
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=15s
+KillSignal=SIGTERM
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+
+[Install]
+WantedBy=multi-user.target
