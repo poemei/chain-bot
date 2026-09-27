@@ -1,0 +1,13 @@
+{
+  "chain": {
+    "host": "127.0.0.1",
+    "port": 18473
+  },
+  "irc": {
+    "host": "irc.libera.chat",
+    "port": 6697,
+    "tls": true,
+    "channel": "#STNC-Chain",
+    "nick": "STNC-ChainBot"
+  }
+}
