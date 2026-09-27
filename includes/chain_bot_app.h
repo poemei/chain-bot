@@ -4,11 +4,13 @@
 #include "chain_bot_config.h"
 #include "chain_bot_irc_runtime.h"
 #include "chain_bot_irc_worker.h"
+#include "chain_bot_observer.h"
 
 typedef struct chain_bot_app {
     chain_bot_config_t config;
     chain_bot_irc_runtime_t irc_runtime;
     chain_bot_irc_worker_t irc_worker;
+    chain_bot_observer_t observer;
     int running;
 } chain_bot_app_t;
 
