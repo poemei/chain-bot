@@ -1,12 +1,8 @@
 #include <string.h>
 
 #include "chain_bot_irc_module.h"
-#include "chain_bot_irc_runtime.h"
-#include "chain_bot_irc_worker.h"
 
-static chain_bot_irc_runtime_t chain_bot_irc_runtime;
-static chain_bot_irc_worker_t chain_bot_irc_worker;
-static int chain_bot_irc_runtime_initialized = 0;
+static int chain_bot_irc_active = 0;
 
 static stnlabz_module_result_t chain_bot_irc_qualify(
     stnlabz_module_qualification_result_t *result)
@@ -59,49 +55,27 @@ static stnlabz_module_result_t chain_bot_irc_qualify(
 static stnlabz_module_result_t chain_bot_irc_start(
     const stnlabz_module_host_t *host)
 {
-    const chain_bot_irc_config_t *config;
-    char error[256];
-
-    if (host == NULL || host->context == NULL) {
+    if (host == NULL) {
         return STNLABZ_MODULE_ERR_INVALID_ARGUMENT;
     }
 
-    if (chain_bot_irc_runtime_initialized) {
+    if (chain_bot_irc_active) {
         return STNLABZ_MODULE_ERR_INVALID_STATE;
     }
 
-    config = (const chain_bot_irc_config_t *)host->context;
-    chain_bot_irc_runtime_init(&chain_bot_irc_runtime);
-
-    if (!chain_bot_irc_runtime_connect(
-            &chain_bot_irc_runtime,
-            config,
-            error,
-            sizeof(error))) {
-        chain_bot_irc_runtime_close(&chain_bot_irc_runtime);
-        return STNLABZ_MODULE_ERR_START_FAILED;
-    }
-
-    chain_bot_irc_worker_init(&chain_bot_irc_worker, &chain_bot_irc_runtime);
-    if (!chain_bot_irc_worker_start(&chain_bot_irc_worker)) {
-        chain_bot_irc_runtime_close(&chain_bot_irc_runtime);
-        return STNLABZ_MODULE_ERR_START_FAILED;
-    }
-
-    chain_bot_irc_runtime_initialized = 1;
+    /*
+     * ABI 1.4 host services do not carry application configuration.
+     * Chain Bot owns IRC configuration and runtime establishment.
+     * Module activation records permission to expose the capability;
+     * it does not reinterpret the ABI host as a configuration carrier.
+     */
+    chain_bot_irc_active = 1;
     return STNLABZ_MODULE_OK;
 }
 
 static stnlabz_module_result_t chain_bot_irc_stop(void)
 {
-    if (!chain_bot_irc_runtime_initialized) {
-        return STNLABZ_MODULE_OK;
-    }
-
-    chain_bot_irc_worker_stop(&chain_bot_irc_worker);
-    chain_bot_irc_runtime_close(&chain_bot_irc_runtime);
-    chain_bot_irc_runtime_initialized = 0;
-
+    chain_bot_irc_active = 0;
     return STNLABZ_MODULE_OK;
 }
 
