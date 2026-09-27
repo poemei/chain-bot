@@ -8,6 +8,7 @@
     "port": 6697,
     "tls": true,
     "channel": "#STNC-Chain",
-    "nick": "STNC-ChainBot"
+    "nick": "chain-bot",
+    "password": "#######"
   }
 }
