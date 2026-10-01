@@ -68,6 +68,11 @@ void chain_bot_log_info(const char *message)
     write_log("INFO", message, stdout);
 }
 
+void chain_bot_log_warn(const char *message)
+{
+    write_log("WARN", message, stderr);
+}
+
 void chain_bot_log_error(const char *message)
 {
     write_log("ERROR", message, stderr);
