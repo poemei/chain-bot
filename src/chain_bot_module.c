@@ -59,7 +59,7 @@ chain_bot_module_result_t chain_bot_module_load(
         return CHAIN_BOT_MODULE_ERR_DESCRIPTOR_INVALID;
     }
 
-    abi_result = stnlabz_module_registry_register(registry, descriptor);
+    abi_result = stnlabz_module_registry_discover(registry, descriptor);
     if (abi_result != STNLABZ_MODULE_OK) {
         dlclose(module->handle);
         chain_bot_module_init(module);
@@ -83,7 +83,7 @@ chain_bot_module_result_t chain_bot_module_load(
     }
 
     {
-        stnlabz_module_record_t *record =
+        const stnlabz_module_record_t *record =
             stnlabz_module_registry_find(registry, descriptor->id);
 
         if (record == NULL ||
