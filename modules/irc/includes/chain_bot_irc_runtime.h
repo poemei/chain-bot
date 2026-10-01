@@ -40,6 +40,13 @@ int chain_bot_irc_runtime_announce(
     char *error,
     size_t error_size);
 
+int chain_bot_irc_runtime_announce_with_slack(
+    chain_bot_irc_runtime_t *runtime,
+    const chain_bot_slack_config_t *slack,
+    const char *message,
+    char *error,
+    size_t error_size);
+
 void chain_bot_irc_runtime_close(chain_bot_irc_runtime_t *runtime);
 
 #endif
