@@ -83,7 +83,7 @@ static int load_module(chain_bot_app_t *app,
     }
 
     log_module_event("active", module);
-    ++app->active_modules;
+    ++app->modules_active;
     return 1;
 }
 
@@ -177,8 +177,8 @@ int chain_bot_app_start(chain_bot_app_t *app, const char *config_path,
 
     (void)snprintf(message, sizeof(message),
                    "Chain Bot module state: %u active module%s.",
-                   app->active_modules,
-                   app->active_modules == 1U ? "" : "s");
+                   app->modules_active,
+                   app->modules_active == 1U ? "" : "s");
     chain_bot_log_info(message);
 
     app->running = 1;
@@ -267,6 +267,6 @@ void chain_bot_app_stop(chain_bot_app_t *app)
         }
     }
 
-    app->active_modules = 0U;
+    app->modules_active = 0U;
     app->running = 0;
 }
