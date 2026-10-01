@@ -6,7 +6,6 @@
 #include <time.h>
 
 #include "chain_bot_app.h"
-#include "chain_bot_slack.h"
 
 static volatile sig_atomic_t chain_bot_stop_requested = 0;
 
@@ -41,21 +40,14 @@ static void hex_encode(const unsigned char *input, size_t length, char *output, 
 
 void chain_bot_app_init(chain_bot_app_t *app)
 {
-    if (app == NULL) {
-        return;
-    }
-
+    if (app == NULL) return;
     memset(app, 0, sizeof(*app));
     chain_bot_irc_runtime_init(&app->irc_runtime);
     chain_bot_irc_worker_init(&app->irc_worker, &app->irc_runtime);
     chain_bot_observer_init(&app->observer, NULL);
 }
 
-int chain_bot_app_start(
-    chain_bot_app_t *app,
-    const char *config_path,
-    char *error,
-    size_t error_size)
+int chain_bot_app_start(chain_bot_app_t *app, const char *config_path, char *error, size_t error_size)
 {
     chain_bot_stnc_info_t baseline;
     int changed;
@@ -68,12 +60,8 @@ int chain_bot_app_start(
         set_error(error, error_size, "Chain Bot is already running");
         return 0;
     }
-    if (!chain_bot_config_load(config_path, &app->config, error, error_size)) {
-        return 0;
-    }
-    if (!chain_bot_irc_runtime_connect(&app->irc_runtime, &app->config.irc, error, error_size)) {
-        return 0;
-    }
+    if (!chain_bot_config_load(config_path, &app->config, error, error_size)) return 0;
+    if (!chain_bot_irc_runtime_connect(&app->irc_runtime, &app->config.irc, error, error_size)) return 0;
 
     chain_bot_observer_init(&app->observer, &app->config.chain);
     if (!chain_bot_observer_poll(&app->observer, &baseline, &changed, error, error_size)) {
@@ -100,9 +88,7 @@ int chain_bot_app_run(chain_bot_app_t *app)
     unsigned int ticks = 0U;
     char error[256];
 
-    if (app == NULL || !app->running) {
-        return 0;
-    }
+    if (app == NULL || !app->running) return 0;
 
     memset(&action, 0, sizeof(action));
     action.sa_handler = chain_bot_signal_handler;
@@ -121,15 +107,11 @@ int chain_bot_app_run(chain_bot_app_t *app)
 
         (void)nanosleep(&delay, NULL);
         ++ticks;
-        if (ticks < 50U) {
-            continue;
-        }
+        if (ticks < 50U) continue;
         ticks = 0U;
 
         previous = app->observer.baseline;
-        if (!chain_bot_observer_poll(&app->observer, &accepted, &changed, error, sizeof(error))) {
-            continue;
-        }
+        if (!chain_bot_observer_poll(&app->observer, &accepted, &changed, error, sizeof(error))) continue;
 
         if (changed) {
             char tip[65];
@@ -137,32 +119,12 @@ int chain_bot_app_run(chain_bot_app_t *app)
 
             hex_encode(accepted.tip_id, sizeof(accepted.tip_id), tip, sizeof(tip));
             if (accepted.height > previous.height) {
-                (void)snprintf(
-                    message,
-                    sizeof(message),
-                    "[STNC] New accepted block - height %llu | tip %s",
-                    (unsigned long long)accepted.height,
-                    tip);
+                (void)snprintf(message, sizeof(message), "[STNC] New accepted block - height %llu | tip %s", (unsigned long long)accepted.height, tip);
             } else {
-                (void)snprintf(
-                    message,
-                    sizeof(message),
-                    "[STNC] Accepted tip changed - height %llu | tip %s",
-                    (unsigned long long)accepted.height,
-                    tip);
+                (void)snprintf(message, sizeof(message), "[STNC] Accepted tip changed - height %llu | tip %s", (unsigned long long)accepted.height, tip);
             }
 
-            (void)chain_bot_irc_runtime_announce(
-                &app->irc_runtime,
-                message,
-                error,
-                sizeof(error));
-
-            (void)chain_bot_slack_announce(
-                &app->config.slack,
-                message,
-                error,
-                sizeof(error));
+            (void)chain_bot_irc_runtime_announce(&app->irc_runtime, message, error, sizeof(error));
         }
     }
 
@@ -171,9 +133,7 @@ int chain_bot_app_run(chain_bot_app_t *app)
 
 void chain_bot_app_stop(chain_bot_app_t *app)
 {
-    if (app == NULL) {
-        return;
-    }
+    if (app == NULL) return;
     if (app->running) {
         chain_bot_irc_worker_stop(&app->irc_worker);
         chain_bot_irc_runtime_close(&app->irc_runtime);
