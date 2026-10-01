@@ -10,5 +10,9 @@
     "channel": "#STNC-Chain",
     "nick": "chain-bot",
     "password": "#######"
+  },
+  "slack": {
+    "enabled": false,
+    "webhook": ""
   }
 }
