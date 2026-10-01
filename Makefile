@@ -5,6 +5,7 @@ LDLIBS := -lssl -lcrypto -ldl -lpthread -lcurl
 BUILD := build
 
 ABI_SRC := ../ABI/src/abi.c ../ABI/src/module.c ../ABI/src/module_registry.c
+LOG := src/chain_bot_log.c
 STNC := src/chain_bot_stnc.c
 OBSERVER := src/chain_bot_observer.c
 SLACK := modules/slack/src/chain_bot_slack.c
@@ -17,9 +18,9 @@ IRC_LOOP := modules/irc/src/chain_bot_irc_loop.c
 IRC_WORKER := modules/irc/src/chain_bot_irc_worker.c
 IRC_MODULE := modules/irc/src/chain_bot_irc_module.c
 IRC_STACK := $(IRC_WORKER) $(IRC_LOOP) $(IRC_COMMANDS) $(STNC) $(IRC_RUNTIME) $(IRC_SESSION) $(IRC_TRANSPORT) $(SLACK)
-APP_SRC := src/chain_bot_app.c src/chain_bot_config.c $(OBSERVER) $(IRC_STACK)
+APP_SRC := src/chain_bot_app.c src/chain_bot_config.c $(LOG) $(OBSERVER) $(IRC_STACK)
 
-TEST_BINS := $(BUILD)/test_chain_bot $(BUILD)/test_chain_bot_config $(BUILD)/test_chain_bot_module $(BUILD)/test_chain_bot_stnc $(BUILD)/test_chain_bot_observer $(BUILD)/test_chain_bot_app $(BUILD)/test_chain_bot_slack $(BUILD)/test_chain_bot_slack_module $(BUILD)/test_chain_bot_irc_commands $(BUILD)/test_chain_bot_irc_runtime $(BUILD)/test_chain_bot_irc_transport $(BUILD)/test_chain_bot_irc_session $(BUILD)/test_chain_bot_irc_loop $(BUILD)/test_chain_bot_irc_worker $(BUILD)/test_chain_bot_irc_module
+TEST_BINS := $(BUILD)/test_chain_bot $(BUILD)/test_chain_bot_config $(BUILD)/test_chain_bot_log $(BUILD)/test_chain_bot_module $(BUILD)/test_chain_bot_stnc $(BUILD)/test_chain_bot_observer $(BUILD)/test_chain_bot_app $(BUILD)/test_chain_bot_slack $(BUILD)/test_chain_bot_slack_module $(BUILD)/test_chain_bot_irc_commands $(BUILD)/test_chain_bot_irc_runtime $(BUILD)/test_chain_bot_irc_transport $(BUILD)/test_chain_bot_irc_session $(BUILD)/test_chain_bot_irc_loop $(BUILD)/test_chain_bot_irc_worker $(BUILD)/test_chain_bot_irc_module
 .PHONY: all test clean check-abi install uninstall
 all: $(BUILD)/chain-bot test
 check-abi:
@@ -31,6 +32,8 @@ $(BUILD)/chain-bot: src/main.c $(APP_SRC) | $(BUILD)
 $(BUILD)/test_chain_bot: tests/test_chain_bot.c src/chain_bot.c | $(BUILD)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@
 $(BUILD)/test_chain_bot_config: tests/test_chain_bot_config.c src/chain_bot_config.c | $(BUILD)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@
+$(BUILD)/test_chain_bot_log: tests/test_chain_bot_log.c $(LOG) | $(BUILD)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@
 $(BUILD)/test_chain_bot_module: tests/test_chain_bot_module.c src/chain_bot_module.c $(ABI_SRC) | $(BUILD) check-abi
 	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@ $(LDLIBS)
@@ -69,6 +72,6 @@ uninstall:
 	-systemctl disable --now chain-bot.service
 	rm -f /etc/systemd/system/chain-bot.service
 	systemctl daemon-reload
-	@echo "Chain Bot service removed. /opt/chain-bot and its configuration were preserved."
+	@echo "Chain Bot service removed. /opt/chain-bot and its configuration/logs were preserved."
 clean:
 	rm -rf $(BUILD)
