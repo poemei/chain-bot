@@ -5,7 +5,6 @@
 #include "chain_bot_irc_runtime.h"
 #include "chain_bot_irc_worker.h"
 #include "chain_bot_observer.h"
-#include "chain_bot_slack.h"
 
 typedef struct chain_bot_app {
     chain_bot_config_t config;
