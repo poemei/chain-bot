@@ -80,9 +80,17 @@ static int test_empty_unload(void)
 static int test_result_strings(void)
 {
     return strcmp(chain_bot_module_result_string(CHAIN_BOT_MODULE_OK), "ok") == 0 &&
+           strcmp(chain_bot_module_result_string(CHAIN_BOT_MODULE_ERR_VERIFY_FAILED),
+                  "verification failed") == 0 &&
+           strcmp(chain_bot_module_result_string(CHAIN_BOT_MODULE_ERR_QUALIFY_FAILED),
+                  "qualification failed") == 0 &&
            strcmp(chain_bot_module_result_string(
-                      CHAIN_BOT_MODULE_ERR_LOAD_FAILED),
-                  "load failed") == 0;
+                      CHAIN_BOT_MODULE_ERR_QUALIFICATION_GATE_FAILED),
+                  "qualification gate failed") == 0 &&
+           strcmp(chain_bot_module_result_string(CHAIN_BOT_MODULE_ERR_AUTHORIZE_FAILED),
+                  "activation authorization failed") == 0 &&
+           strcmp(chain_bot_module_result_string(CHAIN_BOT_MODULE_ERR_START_FAILED),
+                  "module start failed") == 0;
 }
 
 int main(void)
