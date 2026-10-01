@@ -1,9 +1,7 @@
 CC ?= cc
 CFLAGS ?= -std=c11 -Wall -Wextra -Wpedantic -Werror -O2
-CPPFLAGS := -Iincludes -Imodules/irc/includes -I../ABI/includes
-SLACK_CPPFLAGS := $(CPPFLAGS) -Imodules/slack/includes
-LDLIBS := -lssl -lcrypto -ldl -lpthread
-SLACK_LDLIBS := -lcurl
+CPPFLAGS := -Iincludes -Imodules/irc/includes -Imodules/slack/includes -I../ABI/includes
+LDLIBS := -lssl -lcrypto -ldl -lpthread -lcurl
 BUILD := build
 
 ABI_SRC := ../ABI/src/abi.c ../ABI/src/module.c ../ABI/src/module_registry.c
@@ -18,7 +16,7 @@ IRC_RUNTIME := modules/irc/src/chain_bot_irc_runtime.c
 IRC_LOOP := modules/irc/src/chain_bot_irc_loop.c
 IRC_WORKER := modules/irc/src/chain_bot_irc_worker.c
 IRC_MODULE := modules/irc/src/chain_bot_irc_module.c
-IRC_STACK := $(IRC_WORKER) $(IRC_LOOP) $(IRC_COMMANDS) $(STNC) $(IRC_RUNTIME) $(IRC_SESSION) $(IRC_TRANSPORT)
+IRC_STACK := $(IRC_WORKER) $(IRC_LOOP) $(IRC_COMMANDS) $(STNC) $(IRC_RUNTIME) $(IRC_SESSION) $(IRC_TRANSPORT) $(SLACK)
 APP_SRC := src/chain_bot_app.c src/chain_bot_config.c $(OBSERVER) $(IRC_STACK)
 
 TEST_BINS := $(BUILD)/test_chain_bot $(BUILD)/test_chain_bot_config $(BUILD)/test_chain_bot_module $(BUILD)/test_chain_bot_stnc $(BUILD)/test_chain_bot_observer $(BUILD)/test_chain_bot_app $(BUILD)/test_chain_bot_slack $(BUILD)/test_chain_bot_slack_module $(BUILD)/test_chain_bot_irc_commands $(BUILD)/test_chain_bot_irc_runtime $(BUILD)/test_chain_bot_irc_transport $(BUILD)/test_chain_bot_irc_session $(BUILD)/test_chain_bot_irc_loop $(BUILD)/test_chain_bot_irc_worker $(BUILD)/test_chain_bot_irc_module
@@ -43,22 +41,22 @@ $(BUILD)/test_chain_bot_observer: tests/test_chain_bot_observer.c $(OBSERVER) $(
 $(BUILD)/test_chain_bot_app: tests/test_chain_bot_app.c $(APP_SRC) | $(BUILD)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@ $(LDLIBS)
 $(BUILD)/test_chain_bot_slack: modules/slack/tests/test_chain_bot_slack.c $(SLACK) | $(BUILD)
-	$(CC) $(SLACK_CPPFLAGS) $(CFLAGS) $^ -o $@ $(SLACK_LDLIBS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@ $(LDLIBS)
 $(BUILD)/test_chain_bot_slack_module: modules/slack/tests/test_chain_bot_slack_module.c $(SLACK_MODULE) $(ABI_SRC) | $(BUILD) check-abi
-	$(CC) $(SLACK_CPPFLAGS) $(CFLAGS) $^ -o $@ $(LDLIBS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@ $(LDLIBS)
 $(BUILD)/test_chain_bot_irc_commands: modules/irc/tests/test_chain_bot_irc_commands.c $(IRC_COMMANDS) $(STNC) | $(BUILD)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@
-$(BUILD)/test_chain_bot_irc_runtime: tests/test_chain_bot_irc_runtime.c $(IRC_RUNTIME) $(IRC_SESSION) $(IRC_TRANSPORT) | $(BUILD)
+$(BUILD)/test_chain_bot_irc_runtime: tests/test_chain_bot_irc_runtime.c $(IRC_RUNTIME) $(IRC_SESSION) $(IRC_TRANSPORT) $(SLACK) | $(BUILD)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@ $(LDLIBS)
 $(BUILD)/test_chain_bot_irc_transport: modules/irc/tests/test_chain_bot_irc_transport.c $(IRC_TRANSPORT) | $(BUILD)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@ $(LDLIBS)
 $(BUILD)/test_chain_bot_irc_session: modules/irc/tests/test_chain_bot_irc_session.c $(IRC_SESSION) $(IRC_TRANSPORT) | $(BUILD)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@ $(LDLIBS)
-$(BUILD)/test_chain_bot_irc_loop: modules/irc/tests/test_chain_bot_irc_loop.c $(IRC_LOOP) $(IRC_COMMANDS) $(STNC) $(IRC_RUNTIME) $(IRC_SESSION) $(IRC_TRANSPORT) | $(BUILD)
+$(BUILD)/test_chain_bot_irc_loop: modules/irc/tests/test_chain_bot_irc_loop.c $(IRC_LOOP) $(IRC_COMMANDS) $(STNC) $(IRC_RUNTIME) $(IRC_SESSION) $(IRC_TRANSPORT) $(SLACK) | $(BUILD)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@ $(LDLIBS)
-$(BUILD)/test_chain_bot_irc_worker: modules/irc/tests/test_chain_bot_irc_worker.c $(IRC_WORKER) $(IRC_LOOP) $(IRC_COMMANDS) $(STNC) $(IRC_RUNTIME) $(IRC_SESSION) $(IRC_TRANSPORT) | $(BUILD)
+$(BUILD)/test_chain_bot_irc_worker: modules/irc/tests/test_chain_bot_irc_worker.c $(IRC_WORKER) $(IRC_LOOP) $(IRC_COMMANDS) $(STNC) $(IRC_RUNTIME) $(IRC_SESSION) $(IRC_TRANSPORT) $(SLACK) | $(BUILD)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@ $(LDLIBS)
-$(BUILD)/test_chain_bot_irc_module: modules/irc/tests/test_chain_bot_irc_module.c $(IRC_MODULE) $(IRC_WORKER) $(IRC_LOOP) $(IRC_COMMANDS) $(STNC) $(IRC_RUNTIME) $(IRC_SESSION) $(IRC_TRANSPORT) $(ABI_SRC) | $(BUILD) check-abi
+$(BUILD)/test_chain_bot_irc_module: modules/irc/tests/test_chain_bot_irc_module.c $(IRC_MODULE) $(IRC_WORKER) $(IRC_LOOP) $(IRC_COMMANDS) $(STNC) $(IRC_RUNTIME) $(IRC_SESSION) $(IRC_TRANSPORT) $(SLACK) $(ABI_SRC) | $(BUILD) check-abi
 	$(CC) $(CPPFLAGS) $(CFLAGS) $^ -o $@ $(LDLIBS)
 test: $(TEST_BINS)
 	@set -e; for test_bin in $(TEST_BINS); do echo "==> $$test_bin"; ./$$test_bin; done
