@@ -6,6 +6,7 @@
 #include <time.h>
 
 #include "chain_bot_app.h"
+#include "chain_bot_slack.h"
 
 static volatile sig_atomic_t chain_bot_stop_requested = 0;
 
@@ -153,6 +154,12 @@ int chain_bot_app_run(chain_bot_app_t *app)
 
             (void)chain_bot_irc_runtime_announce(
                 &app->irc_runtime,
+                message,
+                error,
+                sizeof(error));
+
+            (void)chain_bot_slack_announce(
+                &app->config.slack,
                 message,
                 error,
                 sizeof(error));
