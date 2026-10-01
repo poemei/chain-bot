@@ -11,6 +11,9 @@ static int test_init(void)
     chain_bot_app_init(&app);
 
     return app.running == 0 &&
+           app.modules_active == 0U &&
+           app.irc_module.handle == NULL &&
+           app.slack_module.handle == NULL &&
            app.irc_runtime.connected == 0 &&
            app.irc_runtime.transport.socket_fd == -1 &&
            app.irc_worker.running == 0 &&
@@ -62,7 +65,11 @@ static int test_stop_is_idempotent(void)
     chain_bot_app_stop(&app);
     chain_bot_app_stop(&app);
 
-    return app.running == 0 && app.irc_runtime.connected == 0;
+    return app.running == 0 &&
+           app.modules_active == 0U &&
+           app.irc_module.handle == NULL &&
+           app.slack_module.handle == NULL &&
+           app.irc_runtime.connected == 0;
 }
 
 int main(void)
