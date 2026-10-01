@@ -59,11 +59,45 @@ chain_bot_module_result_t chain_bot_module_load(
         return CHAIN_BOT_MODULE_ERR_DESCRIPTOR_INVALID;
     }
 
-    abi_result = stnlabz_module_abi_prepare(registry, descriptor);
+    abi_result = stnlabz_module_registry_register(registry, descriptor);
     if (abi_result != STNLABZ_MODULE_OK) {
         dlclose(module->handle);
         chain_bot_module_init(module);
-        return CHAIN_BOT_MODULE_ERR_PREPARE_FAILED;
+        return CHAIN_BOT_MODULE_ERR_VERIFY_FAILED;
+    }
+
+    abi_result = stnlabz_module_registry_verify(registry, descriptor->id);
+    if (abi_result != STNLABZ_MODULE_OK) {
+        (void)stnlabz_module_abi_unregister(registry, descriptor->id);
+        dlclose(module->handle);
+        chain_bot_module_init(module);
+        return CHAIN_BOT_MODULE_ERR_VERIFY_FAILED;
+    }
+
+    abi_result = stnlabz_module_registry_qualify(registry, descriptor->id);
+    if (abi_result != STNLABZ_MODULE_OK) {
+        (void)stnlabz_module_abi_unregister(registry, descriptor->id);
+        dlclose(module->handle);
+        chain_bot_module_init(module);
+        return CHAIN_BOT_MODULE_ERR_QUALIFY_FAILED;
+    }
+
+    {
+        stnlabz_module_record_t *record =
+            stnlabz_module_registry_find(registry, descriptor->id);
+
+        if (record == NULL ||
+            record->state != STNLABZ_MODULE_STATE_QUALIFIED ||
+            record->qualification.tests_executed < STNLABZ_MODULE_MIN_TESTS ||
+            record->qualification.tests_passed != record->qualification.tests_executed ||
+            record->qualification.tests_failed != 0U ||
+            !record->qualification.negative_test_executed ||
+            !record->qualification.negative_test_passed) {
+            (void)stnlabz_module_abi_unregister(registry, descriptor->id);
+            dlclose(module->handle);
+            chain_bot_module_init(module);
+            return CHAIN_BOT_MODULE_ERR_QUALIFICATION_GATE_FAILED;
+        }
     }
 
     module->descriptor = descriptor;
@@ -85,13 +119,24 @@ chain_bot_module_result_t chain_bot_module_activate(
         return CHAIN_BOT_MODULE_ERR_INVALID_ARGUMENT;
     }
 
-    result = stnlabz_module_abi_authorize_and_activate(
+    result = stnlabz_module_registry_authorize_activation(
         registry,
-        module->descriptor->id,
-        host);
+        module->descriptor->id);
+    if (result != STNLABZ_MODULE_OK) {
+        return CHAIN_BOT_MODULE_ERR_AUTHORIZE_FAILED;
+    }
 
+    result = stnlabz_module_registry_activate(
+        registry,
+        module->descriptor->id);
     if (result != STNLABZ_MODULE_OK) {
         return CHAIN_BOT_MODULE_ERR_ACTIVATE_FAILED;
+    }
+
+    if (module->descriptor->start != NULL &&
+        module->descriptor->start(host) != STNLABZ_MODULE_OK) {
+        (void)stnlabz_module_registry_fail(registry, module->descriptor->id);
+        return CHAIN_BOT_MODULE_ERR_START_FAILED;
     }
 
     module->active = 1;
@@ -139,8 +184,12 @@ const char *chain_bot_module_result_string(chain_bot_module_result_t result)
         case CHAIN_BOT_MODULE_ERR_LOAD_FAILED: return "load failed";
         case CHAIN_BOT_MODULE_ERR_EXPORT_MISSING: return "descriptor export missing";
         case CHAIN_BOT_MODULE_ERR_DESCRIPTOR_INVALID: return "descriptor invalid";
-        case CHAIN_BOT_MODULE_ERR_PREPARE_FAILED: return "qualification failed";
+        case CHAIN_BOT_MODULE_ERR_VERIFY_FAILED: return "verification failed";
+        case CHAIN_BOT_MODULE_ERR_QUALIFY_FAILED: return "qualification failed";
+        case CHAIN_BOT_MODULE_ERR_QUALIFICATION_GATE_FAILED: return "qualification gate failed";
+        case CHAIN_BOT_MODULE_ERR_AUTHORIZE_FAILED: return "activation authorization failed";
         case CHAIN_BOT_MODULE_ERR_ACTIVATE_FAILED: return "activation failed";
+        case CHAIN_BOT_MODULE_ERR_START_FAILED: return "module start failed";
         case CHAIN_BOT_MODULE_ERR_STOP_FAILED: return "stop or unregister failed";
         default: return "unknown";
     }
