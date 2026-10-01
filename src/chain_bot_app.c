@@ -27,9 +27,7 @@ static void hex_encode(const unsigned char *input, size_t length, char *output, 
     static const char hex[] = "0123456789abcdef";
     size_t i;
 
-    if (input == NULL || output == NULL || output_size < (length * 2U) + 1U) {
-        return;
-    }
+    if (input == NULL || output == NULL || output_size < (length * 2U) + 1U) return;
 
     for (i = 0U; i < length; ++i) {
         output[i * 2U] = hex[(input[i] >> 4) & 0x0fU];
@@ -119,12 +117,18 @@ int chain_bot_app_run(chain_bot_app_t *app)
 
             hex_encode(accepted.tip_id, sizeof(accepted.tip_id), tip, sizeof(tip));
             if (accepted.height > previous.height) {
-                (void)snprintf(message, sizeof(message), "[STNC] New accepted block - height %llu | tip %s", (unsigned long long)accepted.height, tip);
+                (void)snprintf(message, sizeof(message),
+                               "[STNC] New accepted block - height %llu | tip %s",
+                               (unsigned long long)accepted.height, tip);
             } else {
-                (void)snprintf(message, sizeof(message), "[STNC] Accepted tip changed - height %llu | tip %s", (unsigned long long)accepted.height, tip);
+                (void)snprintf(message, sizeof(message),
+                               "[STNC] Accepted tip changed - height %llu | tip %s",
+                               (unsigned long long)accepted.height, tip);
             }
 
-            (void)chain_bot_irc_runtime_announce(&app->irc_runtime, message, error, sizeof(error));
+            (void)chain_bot_irc_runtime_announce_with_slack(
+                &app->irc_runtime, &app->config.slack,
+                message, error, sizeof(error));
         }
     }
 
