@@ -4,6 +4,7 @@ set -eu
 SERVICE_NAME="chain-bot"
 INSTALL_DIR="/opt/chain-bot"
 CONFIG_DIR="${INSTALL_DIR}/config"
+LOG_DIR="${INSTALL_DIR}/logs"
 BINARY_SOURCE="build/chain-bot"
 CONFIG_SOURCE="config/chain_bot.json"
 SERVICE_SOURCE="systemd/chain-bot.service"
@@ -43,6 +44,7 @@ fi
 
 install -d -o root -g chain-bot -m 0750 "${INSTALL_DIR}"
 install -d -o root -g chain-bot -m 0750 "${CONFIG_DIR}"
+install -d -o chain-bot -g chain-bot -m 0750 "${LOG_DIR}"
 install -o root -g root -m 0755 "${BINARY_SOURCE}" "${INSTALL_DIR}/chain-bot"
 
 if [ ! -f "${CONFIG_DIR}/chain_bot.json" ]; then
@@ -60,8 +62,9 @@ systemctl enable "${SERVICE_NAME}.service"
 echo "Chain Bot installed."
 echo "Service: ${SERVICE_NAME}.service"
 echo "Config:  ${CONFIG_DIR}/chain_bot.json"
+echo "Log:     ${LOG_DIR}/chain-bot.log"
 echo "Start:   systemctl start ${SERVICE_NAME}"
 echo "Stop:    systemctl stop ${SERVICE_NAME}"
 echo "Restart: systemctl restart ${SERVICE_NAME}"
 echo "Status:  systemctl status ${SERVICE_NAME}"
-echo "Logs:    journalctl -u ${SERVICE_NAME} -f"
+echo "Journal: journalctl -u ${SERVICE_NAME} -f"
